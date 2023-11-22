@@ -1,6 +1,14 @@
 name: ci
 on: [push]
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - run: g++ -std=c++17 main.cpp -ggdb -Werror
+    - uses: actions/@cache@v3
+      with:
+        path: ./a.out
+        key: build
   test-against-unix-wc:
     runs-on: ubuntu-latest
     steps:
