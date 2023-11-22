@@ -4,13 +4,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
     - run: g++ -std=c++17 main.cpp -ggdb -Werror
-    - uses: actions/@cache@v3
+    - run: ls
+    - uses: actions/cache@v3
       with:
-        path: ./a.out
+        path: a.out
         key: build
-  test-against-unix-wc:
+  run-my-wc:
     runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      my-wc-output: ${{ steps.my-wc-run.outputs.result }}
     steps:
       - uses: actions/checkout@v4
-      - run: wc test.txt
+      - uses: actions/cache@v3
+        with:
+          key: build
+          path: a.out
+      - id: my-wc-run
+        run: echo "result=$(./a.out test.txt)" >> $GITHUB_OUTPUT
+  run-unix-wc:
+    runs-on: ubuntu-latest
+    outputs:
+      wc-output: ${{ steps.wc-run.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: wc-run
+        run: echo "result=$(wc test.txt)" >> $GITHUB_OUTPUT
+  test-against-unix-wc:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - run-unix-wc
+      - run-my-wc
+    steps:
+      -  run: echo ${{ needs.run-unix-wc.outputs.wc-output }} ${{ needs.run-my-wc.outputs.my-wc-output }}
